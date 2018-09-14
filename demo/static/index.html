@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Demo</title>
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans:400,700" rel="stylesheet">
+    <link rel="stylesheet" href="static/styling/style.css">
+    <link rel="stylesheet" href="static/styling/fa/all.min.css">
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.min.js"
+      integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+      crossorigin="anonymous"></script>
+    <script src="static/script.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Food Delivery Demo</h1>
+    </div>
+    <div class="content">
+        <div class="map-column">
+            <div id="map"></div>
+        </div>
+        <div class="settings-column">
+            <div class="generate">
+                <h2>Generate</h2>
+                <form id="gen-form" action="">
+                    <p># of orders</p>
+                    <input type="text" id="o-num">
+                    <p># of drivers</p>
+                    <input type="text" id="d-num"><br /><br>
+                </form>
+                <button id="gen-form-submit">generate</button>
+            </div>
+            <div class="solve">
+                <h2>Solve</h2>
+                <form id="solve-form" action="">
+                    <input type="radio" name="algorithm" value="single" checked> single orders only<br>
+                    <input type="radio" name="algorithm" value="double"> single & double orders<br><br>
+                </form>
+                <button id="solve-form-submit">solve</button>
+            </div>
+            <div class="legend">
+                <h2>Legend</h2>
+                <div class="item">
+                    <img src="static/styling/img/building.png" alt="company" width="20px" height="20px">
+                    <p>company</p>
+                </div>
+                <div class="item">
+                    <img src="static/styling/img/car.png" alt="driver" width="20px" height="20px">
+                    <p>driver</p>
+                </div>
+                <div class="item">
+                    <img src="static/styling/img/utensils.png" alt="restaurant" width="20px" height="20px">
+                    <p>restaurant</p>
+                </div>
+            </div>
+        </div>
+        <div class="data-column">
+            <div class="matching">
+                <h2>Matching Data</h2>
+                <div class="data-box">
+                    <div>
+                        <p>Total Distance</p>
+                        <p>Percentage of Matched Orders</p>
+                    </div>
+                    <div>
+                        <p id='distance-field'>n/a</p>
+                        <p id='percent-field'>n/a</p>
+                    </div>
+                </div>
+            </div>
+            <div class="match-data">
+                <h2>Driver/Order Matches</h2>
+                <table class="match-table">
+                  <tr>
+                    <th>Driver #</th>
+                    <th>Order</th>
+                    <th>Distance</th>
+                  </tr>
+                  <tbody id="match-table">
+
+                  </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqCmBPwehNvlma3JQYSuBN7A0Sh_58RUg&callback=initMap"></script>
+</body>
+</html>

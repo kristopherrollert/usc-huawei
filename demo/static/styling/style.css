@@ -1,0 +1,110 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    max-height: 100vh;
+    height: 100vh;
+}
+
+h2 {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+* {
+    font-family: 'Noto Sans', sans-serif;
+}
+
+.header {
+    background-color: #292929;
+}
+
+form > p {
+    margin-bottom: 5px;
+}
+
+.header > h1 {
+    margin: 0;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-left: 50px;
+    color: white;
+}
+
+.content {
+    display: flex;
+    padding-top: 50px;
+    justify-content: space-evenly;
+}
+
+.map-body {
+    display: inline-block;
+    width: 520px;
+}
+
+.sidebar {
+    padding-left: 30px;
+    display: inline-block;
+    width: calc(100% - 540px)
+}
+
+.data-box > div{
+    display: inline-block;
+    margin-right: 30px;
+}
+
+.settings-column > div, .data-column > div {
+    margin-bottom: 30px;
+}
+
+.match-table {
+    margin-top: 10px;
+    width: 600px;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: .5px solid #292929;
+    border-collapse: collapse;
+}
+
+button {
+    background-color: #292929;
+    border: 1px solid #292929;
+    color: white;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: white;
+    color: #292929;
+}
+
+#solve-form {
+    margin-top: 10px;
+}
+
+#map {
+    float: right;
+    border: solid #292929 .5px;
+    width: 505.7px;
+    height: 614.9px;
+}
+
+.legend > .item > img {
+    float: left;
+    margin-right: 15px;
+}
+
+.data-row {
+    cursor: pointer;
+    text-align: center;
+}
+
+th, td {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
