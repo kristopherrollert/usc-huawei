@@ -12,7 +12,7 @@ from generate import *
 from functions import *
 
 # Constants
-EARTH_RADIUS = 6371 # in kmpip
+EARTH_RADIUS = 6371 # in km
 SOURCE = 0
 SINK = 0
 driver_offset = 0
@@ -32,7 +32,7 @@ def alt_multi():
 
     deliverable = create_2d_array(len(orders), len(drivers), val=False)
     driver_single_path = {}
-    paths = {}
+    paths = {} # TODO: CHECK IF NEEDED
     node_index_to_text = {}
 
     # Setting constants
@@ -116,76 +116,129 @@ def alt_multi():
     already_created_extra_order_edges = {}
     combo_orders = create_2d_array(len(orders), len(orders))
     combo_order_index = 0
-    driver_double_path = {}
+    driver_double_path = {} # needed
 
+    # for o1_index, o1 in enumerate(orders):
+    #     result_queue = mp.Queue()
+    #     processes = []
+    #     order_range_rad = deg2rad(o1.deadline * 0.008)
+    #     rng_company = neigh_company.radius_neighbors([company_locations[o1_index]], radius=order_range_rad, return_distance=False)
+    #     for o2_index in rng_company[0]:
+    #         if o1_index == o2_index: continue
+    #         o2_index = int(o2_index)
+    #         o2 = orders[o2_index]
+    #         processes.append(mp.Process(target=double_comp, args=(o1_index, o2_index, o1, o2, drivers, deliverable, result_queue)))
+    #
+    #     for p in processes: p.start()
+    #
+    #     while 1:
+    #         running = any(p.is_alive() for p in processes)
+    #         while not result_queue.empty():
+    #             data = result_queue.get()
+    #             o1, o2 = data['orders']
+    #             all_data = data['routes']
+    #             o1_index, o2_index = data['o_indices']
+    #             possible_drivers = data['possible_drivers']
+    #             possible_driver_locations = data['pd_locations']
+    #             curr_combo_order_index = None
+    #             s, e = (o1_index, o2_index) if o1_index < o2_index else (o2_index, o1_index)
+    #             if combo_orders[s][e] is None:
+    #                 node_index_to_text[order_double_node(combo_order_index, order_offset)] = 'C' + str(s + 1) + ',' + str(e + 1)
+    #                 combo_orders[s][e] = combo_order_index
+    #                 curr_combo_order_index = combo_order_index
+    #                 already_created_extra_order_edges[curr_combo_order_index] = False
+    #                 combo_order_index += 1
+    #             else:
+    #                 curr_combo_order_index = combo_orders[s][e]
+    #
+    #             neigh_drivers = NearestNeighbors(metric="haversine", algorithm="ball_tree")
+    #             end_node = order_double_node(curr_combo_order_index, order_offset)
+    #
+    #             if not end_node in paths.keys():
+    #                 paths[end_node] = {}
+    #
+    #             if len(possible_driver_locations) != 0:
+    #                 neigh_drivers.fit(possible_driver_locations)
+    #                 driver_path_info = [None] * len(drivers)
+    #                 for path in all_data:
+    #                     o1_fin = path['distances'][path['order'].index(o1.company)]
+    #                     o2_fin = path['distances'][path['order'].index(o2.company)]
+    #                     driver_range = min(o1.deadline - o1_fin, o2.deadline - o2_fin)
+    #                     if driver_range < 0.0: continue
+    #                     driver_range_rad = deg2rad(driver_range * 0.008)
+    #                     rng_drivers = neigh_drivers.radius_neighbors([path['order'][0].location_in_rad()], radius=driver_range_rad)
+    #                     for d_index, d_distance in zip(rng_drivers[1][0], rng_drivers[0][0]):
+    #                         total_cost = int(((d_distance * EARTH_RADIUS + path['distances'][-1]) * 1000) / 2)
+    #                         if driver_path_info[d_index] is None or driver_path_info[d_index][0] > total_cost:
+    #                             driver_path_info[d_index] = (total_cost, path)
+    #
+    #                 for data_index in range(len(driver_path_info)):
+    #                     if driver_path_info[data_index] is None: continue
+    #                     distance, path = driver_path_info[data_index]
+    #                     id = str(o1_index + 1) + ',' + str(o2_index + 1)
+    #                     start_node = driver_double_order_node(data_index)
+    #                     paths[end_node][start_node] = path #done
+    #
+    #                     if not already_created_extra_order_edges[curr_combo_order_index]:
+    #                         already_created_extra_order_edges[curr_combo_order_index] = True
+    #                         generate_extra_order_edges(graph, curr_combo_order_index, o1_index, o2_index, driver_offset, order_offset, node_index_to_text)
+    #                     graph.AddArcWithCapacityAndUnitCost(start_node, end_node, 2, distance)
+    #
+    #         if not running:
+    #             break
+
+    tasks = []
     for o1_index, o1 in enumerate(orders):
-        result_queue = mp.Queue()
-        processes = []
-        order_range_rad = deg2rad(o1.deadline * 0.008)
-        rng_company = neigh_company.radius_neighbors([company_locations[o1_index]], radius=order_range_rad, return_distance=False)
-        for o2_index in rng_company[0]:
-            if o1_index == o2_index: continue
-            o2_index = int(o2_index)
-            o2 = orders[o2_index]
-            processes.append(mp.Process(target=double_comp, args=(o1_index, o2_index, o1, o2, drivers, deliverable, result_queue)))
+        tasks.append([o1, o1_index, neigh_company, company_locations, deliverable, drivers])
 
-        for p in processes: p.start()
+    pool1 = mp.Pool()
+    args = pool1.starmap(double_comp_NN, tasks)
 
-        while 1:
-            running = any(p.is_alive() for p in processes)
-            while not result_queue.empty():
-                data = result_queue.get()
-                o1, o2 = data['orders']
-                all_data = data['routes']
-                o1_index, o2_index = data['o_indices']
-                possible_drivers = data['possible_drivers']
-                possible_driver_locations = data['pd_locations']
-                curr_combo_order_index = None
-                s, e = (o1_index, o2_index) if o1_index < o2_index else (o2_index, o1_index)
-                if combo_orders[s][e] is None:
-                    node_index_to_text[order_double_node(combo_order_index, order_offset)] = 'C' + str(s + 1) + ',' + str(e + 1)
-                    combo_orders[s][e] = combo_order_index
-                    curr_combo_order_index = combo_order_index
-                    already_created_extra_order_edges[curr_combo_order_index] = False
-                    combo_order_index += 1
-                else:
-                    curr_combo_order_index = combo_orders[s][e]
+    for j in range(len(args)):
+        if args[j][0]:
+            args[j][1] = orders[args[j][1]]
 
-                neigh_drivers = NearestNeighbors(metric="haversine", algorithm="ball_tree")
-                end_node = order_double_node(curr_combo_order_index, order_offset)
+    pool2 = mp.Pool()
+    results = pool2.starmap(double_path_comp, args)
+    pool2.close()
 
-                if not end_node in paths.keys():
-                    paths[end_node] = {}
+    for driver_path_info, data in results:
+        if driver_path_info is None: continue
+        o1_index, o2_index = data['o_indices']
+        o1, o2 = orders[o1_index], orders[o2_index]
+        possible_drivers = data['possible_drivers']
+        possible_driver_locations = data['pd_locations']
 
-                if len(possible_driver_locations) != 0:
-                    neigh_drivers.fit(possible_driver_locations)
-                    driver_path_info = [None] * len(drivers)
-                    for path in all_data:
-                        o1_fin = path['distances'][path['order'].index(o1.company)]
-                        o2_fin = path['distances'][path['order'].index(o2.company)]
-                        driver_range = min(o1.deadline - o1_fin, o2.deadline - o2_fin)
-                        if driver_range < 0.0: continue
-                        driver_range_rad = deg2rad(driver_range * 0.008)
-                        rng_drivers = neigh_drivers.radius_neighbors([path['order'][0].location_in_rad()], radius=driver_range_rad)
-                        for d_index, d_distance in zip(rng_drivers[1][0], rng_drivers[0][0]):
-                            total_cost = int(((d_distance * EARTH_RADIUS + path['distances'][-1]) * 1000) / 2)
-                            if driver_path_info[d_index] is None or driver_path_info[d_index][0] > total_cost:
-                                driver_path_info[d_index] = (total_cost, path)
+        curr_combo_order_index = None
+        s, e = (o1_index, o2_index) if o1_index < o2_index else (o2_index, o1_index)
+        if combo_orders[s][e] is None:
+            node_index_to_text[order_double_node(combo_order_index, order_offset)] = 'C' + str(s + 1) + ',' + str(e + 1)
+            combo_orders[s][e] = combo_order_index
+            curr_combo_order_index = combo_order_index
+            already_created_extra_order_edges[curr_combo_order_index] = False
+            combo_order_index += 1
+        else:
+            curr_combo_order_index = combo_orders[s][e]
 
-                    for data_index in range(len(driver_path_info)):
-                        if driver_path_info[data_index] is None: continue
-                        distance, path = driver_path_info[data_index]
-                        id = str(o1_index + 1) + ',' + str(o2_index + 1)
-                        start_node = driver_double_order_node(data_index)
-                        paths[end_node][start_node] = path
+        end_node = order_double_node(curr_combo_order_index, order_offset)
 
-                        if not already_created_extra_order_edges[curr_combo_order_index]:
-                            already_created_extra_order_edges[curr_combo_order_index] = True
-                            generate_extra_order_edges(graph, curr_combo_order_index, o1_index, o2_index, driver_offset, order_offset, node_index_to_text)
-                        graph.AddArcWithCapacityAndUnitCost(start_node, end_node, 2, distance)
+        if not end_node in paths.keys():
+            paths[end_node] = {}
 
-            if not running:
-                break
+        if len(possible_driver_locations) != 0:
+            for data_index in range(len(driver_path_info)):
+                if driver_path_info[data_index] is None: continue
+                distance, path = driver_path_info[data_index]
+                start_node = driver_double_order_node(data_index)
+                paths[end_node][start_node] = path
+                if not already_created_extra_order_edges[curr_combo_order_index]:
+                    already_created_extra_order_edges[curr_combo_order_index] = True
+                    generate_extra_order_edges(graph, curr_combo_order_index, o1_index, o2_index, driver_offset, order_offset, node_index_to_text)
+                graph.AddArcWithCapacityAndUnitCost(start_node, end_node, 2, distance)
+
+
+
+
 
     node_supplies = min(len(drivers) * 2, len(orders))
     graph.SetNodeSupply(0, node_supplies)
@@ -329,22 +382,49 @@ def alt_multi():
     'percent_matched': percent_matched,
     'matches': driver_assignment}
 
-def double_comp(o1_index, o2_index, o1, o2, drivers, deliverable, queue):
-    possible_drivers, possible_driver_locations = [], []
-    for d_index, driver in enumerate(drivers):
-        if deliverable[o1_index][d_index] and deliverable[o2_index][d_index]:
-            possible_drivers.append(driver)
-            possible_driver_locations.append(driver.location_in_rad())
+def double_path_comp(o1, o2, data):
+    if data and len(data['pd_locations']) != 0:
+        paths = all_paths_double(o1.restaurants, o1.company, o1.deadline, o2.restaurants, o2.company, o2.deadline)
+        neigh_drivers = NearestNeighbors(metric="haversine", algorithm="ball_tree")
+        neigh_drivers.fit(data['pd_locations'])
+        driver_path_info = [None] * data['d_num']
+        for path in paths:
+            o1_fin = path['distances'][path['order'].index(o1.company)]
+            o2_fin = path['distances'][path['order'].index(o2.company)]
+            driver_range = min(o1.deadline - o1_fin, o2.deadline - o2_fin)
+            if driver_range < 0.0: continue
+            driver_range_rad = deg2rad(driver_range * 0.008)
+            rng_drivers = neigh_drivers.radius_neighbors([path['order'][0].location_in_rad()], radius=driver_range_rad)
+            for d_index, d_distance in zip(rng_drivers[1][0], rng_drivers[0][0]):
+                total_cost = int(((d_distance * EARTH_RADIUS + path['distances'][-1]) * 1000) / 2)
+                if driver_path_info[d_index] is None or driver_path_info[d_index][0] > total_cost:
+                    driver_path_info[d_index] = (total_cost, path)
+        return (driver_path_info, data)
+    else:
+        return (None, None)
 
-    if len(possible_drivers) != 0:
-        all_data = all_paths_double(o1.restaurants, o1.company, o1.deadline, o2.restaurants, o2.company, o2.deadline)
-        queue.put({
-            'routes' : all_data,
-            'possible_drivers' : possible_drivers,
-            'pd_locations' : possible_driver_locations,
-            'orders' : (o1, o2),
-            'o_indices' : (o1_index, o2_index)
-            })
+def double_comp_NN(o1, o1_index, nn, company_locations, deliverable, drivers):
+    order_range_rad = deg2rad(o1.deadline * 0.008)
+    rng_company = nn.radius_neighbors([company_locations[o1_index]], radius=order_range_rad, return_distance=False)
+    for o2_index in rng_company[0]:
+        if o1_index == o2_index: continue
+        o2_index = int(o2_index)
+        possible_drivers, possible_driver_locations = [], []
+        for d_index, driver in enumerate(drivers):
+            if deliverable[o1_index][d_index] and deliverable[o2_index][d_index]:
+                possible_drivers.append(driver)
+                possible_driver_locations.append(driver.location_in_rad())
+
+        if len(possible_drivers) != 0:
+            data = {
+                'possible_drivers' : possible_drivers,
+                'pd_locations' : possible_driver_locations,
+                'o_indices' : (o1_index, o2_index),
+                'd_num': len(drivers)
+            }
+            return [o1, o2_index, data]
+        else:
+            return [None, None, None]
 
 def optimal_solution():
     min_cost_flow = pywrapgraph.SimpleMinCostFlow()

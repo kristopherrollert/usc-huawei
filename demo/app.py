@@ -1,13 +1,10 @@
+import sys
+import json
+from generate import *
 from algorithms import *
 
 from flask import Flask, request
 app = Flask(__name__, static_url_path='/static')
-
-import sys
-import json
-sys.path.insert(0, '../Updated Version')
-
-from generate import *
 
 @app.route("/solve", methods=['POST'])
 def solve():
@@ -39,15 +36,17 @@ def generate():
 	generate_new_test_data(int(o_num), int(d_num), int(o_num))
 	return json.dumps(generate_all(), default=lambda o: o.__dict__)
 
+@app.route("/load", methods=['POST'])
+def load():
+	return json.dumps(generate_all(), default=lambda o: o.__dict__)
+
 @app.route("/get_data", methods=['GET'])
 def get_data():
 	return json.dumps(generate_all(), default=lambda o: o.__dict__)
 
 @app.route('/')
 def root():
-	# postData = req.form
-	# print(postData, file=sys.stderr)
     return app.send_static_file('index.html')
 
 if __name__ == "__main__":
-	app.run()
+	app.run(host='0.0.0.0', port=80)
